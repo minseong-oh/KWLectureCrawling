@@ -45,12 +45,12 @@ def collectReviews(lecture, professor):
     
     for i in range(1,size+1):
         # 해당 과목을 맡은 교수가 존재하는지 확인 없으면 리턴
-        try:
-            name = driver.find_element_by_xpath('/html/body/div/div/div[2]/a[{}]/div[2]'.format(i))
-            if name.text == professor:
-                break
-        except:
-            return "알수없음" 
+        name = driver.find_element_by_xpath('/html/body/div/div/div[2]/a[{}]/div[2]'.format(i))
+        if name.text == professor:
+            break
+    if name.text != professor:
+        driver.back()
+        return "알수없음"
             
     name.click()
     time.sleep(randomTime())
@@ -71,7 +71,7 @@ def collectReviews(lecture, professor):
     for i in range(1,reviewSize):
         res = driver.find_element_by_xpath('/html/body/div/div/div[2]/div/div[2]/div[{}]/div[2]'.format(i)).text
         
-        review += res
+        review += res+' '
         time.sleep(randomTime())
         
     driver.back()
@@ -100,9 +100,11 @@ if __name__ == '__main__':
     login("아이디", "비밀번호")
     fileName = "2022년2학기.csv"
     df = pd.read_csv(fileName)
-    info = dict(zip(df.과목명, df.담당교수))
+    info = df[['과목명','담당교수']]
+    
     reviews = dict()
-    for lecture, professor in info.items():
-        reviews[(lecture, professor)] = collectReviews(lecture, professor)
-        
-        print(reviews)    
+#    for i in range(info.shape[0]):
+#        lecture, professor = info.과목명[i], info.담당교수[i]
+#        reviews[(lecture, professor)] = collectReviews(lecture, professor)
+    collectReviews(info.과목명[18], info.담당교수[18])
+    
