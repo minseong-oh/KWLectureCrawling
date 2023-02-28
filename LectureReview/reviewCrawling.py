@@ -5,10 +5,10 @@ import time
 import random
 import pandas as pd
 import pyautogui
-
+import pickle
 
 def randomTime():
-    return random.uniform(3,5)
+    return random.uniform(2,4.5)
 
 def login(userid, password):
     #아이디 입력
@@ -31,11 +31,19 @@ def login(userid, password):
     #강의실 페이지로 이동
     driver.find_element_by_xpath('//*[@id="menu"]/li[3]/a').click()
     time.sleep(randomTime())
-
+    
+    search = driver.find_element_by_xpath('/html/body/div/div/div[1]/div/form/input[1]')
+    search.send_keys('이동')
+    time.sleep(1)
+    driver.find_element_by_class_name('submit').click()
+    time.sleep(randomTime())
+    
 
 def collectReviews(lecture, professor):
     # 강의평 위치로 이동
-    search = driver.find_element_by_name("keyword")
+    search = driver.find_element_by_xpath('/html/body/div/div/div[1]/form/input[1]')
+    search.clear()
+    time.sleep(1)
     search.send_keys(lecture)
     time.sleep(randomTime())
     driver.find_element_by_class_name('submit').click()
@@ -49,7 +57,7 @@ def collectReviews(lecture, professor):
         if name.text == professor:
             break
     if name.text != professor:
-        driver.back()
+        time.sleep(randomTime())
         return "알수없음"
             
     name.click()
@@ -59,6 +67,8 @@ def collectReviews(lecture, professor):
     try:
         driver.find_element_by_class_name('more').click()
     except: # 강의평이 없는 경우
+        driver.back()
+        time.sleep(randomTime())
         return "알수없음"
     
     time.sleep(randomTime())
@@ -72,10 +82,8 @@ def collectReviews(lecture, professor):
         res = driver.find_element_by_xpath('/html/body/div/div/div[2]/div/div[2]/div[{}]/div[2]'.format(i)).text
         
         review += res+' '
-        time.sleep(randomTime())
+        time.sleep(random.uniform(1,3))
         
-    driver.back()
-    time.sleep(randomTime())
     driver.back()
     time.sleep(randomTime())
     driver.back()
@@ -100,11 +108,28 @@ if __name__ == '__main__':
     login("아이디", "비밀번호")
     fileName = "2022년2학기.csv"
     df = pd.read_csv(fileName)
+    
+    '''
+    강의 수가 너무 많아서 나눠서 저장.
+    6:17 ->  200개 진행 -> 7:50 완료
+    8:27 -> 200개 진행 -> 10:02 완료
+    10:15 -> 100개 진행 -> 10:55 완료
+    3:55 -> 나머지 진행 -> 11:57 완료
+    '''
+    
     info = df[['과목명','담당교수']]
     
     reviews = dict()
-#    for i in range(info.shape[0]):
-#        lecture, professor = info.과목명[i], info.담당교수[i]
-#        reviews[(lecture, professor)] = collectReviews(lecture, professor)
-    collectReviews(info.과목명[18], info.담당교수[18])
+    for i in range(info.shape[0]):
+        lecture, professor = info.과목명[i], info.담당교수[i]
+        reviews[(lecture, professor)] = collectReviews(lecture, professor)
+        print(i," ok")
+        
+    # pkl 파일로 저장
+    with open("LectureReviews.pkl", "wb") as f:
+        pickle.dump(reviews, f)
     
+    '''pickle 불러오기
+    with open("LectureReviews.pkl", "rb") as f:
+        d = pickle.load(f)
+    '''
